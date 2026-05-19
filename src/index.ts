@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+import { readFileSync } from "fs";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod/v4";
@@ -11,13 +12,17 @@ import type { KbCategory } from "./types.js";
 
 const CATEGORIES = ["api", "patterns", "bugs", "docs"] as const;
 
+const packageVersion = readPackageVersion();
+
+handleCliArgs(process.argv.slice(2));
+
 async function main() {
   const kb = loadKb();
   const server = new McpServer(
     {
       name: "d3-kb-mcp",
       title: "d3 Plugin Toolkit Knowledge Base",
-      version: "0.1.0",
+      version: packageVersion,
     },
     {
       capabilities: {
@@ -185,3 +190,74 @@ main().catch((error) => {
   console.error(error instanceof Error ? error.message : String(error));
   process.exitCode = 1;
 });
+
+function handleCliArgs(args: string[]) {
+  if (args.length === 0) return;
+
+  if (args.length === 1 && ["--help", "-h", "help"].includes(args[0])) {
+    printHelp();
+    process.exit(0);
+  }
+
+  if (args.length === 1 && ["--version", "-v", "version"].includes(args[0])) {
+    console.log(packageVersion);
+    process.exit(0);
+  }
+
+  console.error(`Unknown argument: ${args.join(" ")}`);
+  console.error("Run with --help for usage.");
+  process.exit(2);
+}
+
+function readPackageVersion() {
+  try {
+    const packageJsonUrl = new URL("../package.json", import.meta.url);
+    const packageJson = JSON.parse(readFileSync(packageJsonUrl, "utf8")) as { version?: string };
+    return packageJson.version || "0.0.0";
+  } catch {
+    return "0.0.0";
+  }
+}
+
+function printHelp() {
+  console.log(`d3-kb-mcp ${packageVersion}
+
+Read-only MCP server for the curated d3-plugin-toolkit knowledge base.
+
+Usage:
+  d3-kb-mcp
+  npx @hiveschool/d3-kb-mcp
+  d3-kb-mcp --help
+  d3-kb-mcp --version
+
+The command starts a stdio MCP server. Run it through an MCP-capable client;
+running it directly will wait for JSON-RPC messages on stdin.
+
+Codex setup:
+  codex mcp add d3-kb -- npx @hiveschool/d3-kb-mcp
+
+Claude Code setup, from the project where you want the KB available:
+  claude mcp add --scope project d3-kb -- npx @hiveschool/d3-kb-mcp
+
+Toolkit clone setup:
+  node C:/path/to/d3-plugin-toolkit/packages/kb-mcp/dist/index.js
+
+Tools:
+  search_kb             Search compact KB metadata and summaries.
+  get_kb_entry          Load one full KB entry by ID.
+  get_related_entries   Find related curated entries for an entry ID.
+  context_pack          Build a bounded retrieval pack for an assistant goal.
+
+Resources:
+  d3kb://api/<slug>
+  d3kb://patterns/<slug>
+  d3kb://bugs/<slug>
+  d3kb://docs/reference
+
+Smoke prompt:
+  Use the d3-kb MCP server. Search for "bare except" with limit 3, load
+  patterns/bare-except-required, get related entries for
+  patterns/active-context-resolution, build a context pack for safely writing
+  Designer Python, and read d3kb://docs/reference.
+`);
+}

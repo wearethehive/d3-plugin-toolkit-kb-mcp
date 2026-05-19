@@ -13,6 +13,25 @@ Run directly with npm:
 npx @hiveschool/d3-kb-mcp
 ```
 
+Show setup help:
+
+```bash
+npx @hiveschool/d3-kb-mcp --help
+npx @hiveschool/d3-kb-mcp --version
+```
+
+Add it to Codex from any project:
+
+```bash
+codex mcp add d3-kb -- npx @hiveschool/d3-kb-mcp
+```
+
+Add it to Claude Code from the project where you want the KB available:
+
+```bash
+claude mcp add --scope project d3-kb -- npx @hiveschool/d3-kb-mcp
+```
+
 Or clone this repository:
 
 ```bash
@@ -36,6 +55,15 @@ Resources:
 - `d3kb://patterns/<slug>`
 - `d3kb://bugs/<slug>`
 - `d3kb://docs/reference`
+
+Smoke prompt:
+
+```text
+Use the d3-kb MCP server. Search for "bare except" with limit 3, load
+patterns/bare-except-required, get related entries for
+patterns/active-context-resolution, build a context pack for safely writing
+Designer Python, and read d3kb://docs/reference.
+```
 
 ## Scope
 
